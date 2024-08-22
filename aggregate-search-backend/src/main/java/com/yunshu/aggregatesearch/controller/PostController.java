@@ -1,7 +1,7 @@
 package com.yunshu.aggregatesearch.controller;
 
-import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.google.gson.Gson;
 import com.yunshu.aggregatesearch.annotation.AuthCheck;
 import com.yunshu.aggregatesearch.common.BaseResponse;
 import com.yunshu.aggregatesearch.common.DeleteRequest;
@@ -32,6 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * 帖子接口
+ *
 
  */
 @RestController
@@ -44,6 +45,8 @@ public class PostController {
 
     @Resource
     private UserService userService;
+
+    private final static Gson GSON = new Gson();
 
     // region 增删改查
 
@@ -63,7 +66,7 @@ public class PostController {
         BeanUtils.copyProperties(postAddRequest, post);
         List<String> tags = postAddRequest.getTags();
         if (tags != null) {
-            post.setTags(JSONUtil.toJsonStr(tags));
+            post.setTags(GSON.toJson(tags));
         }
         postService.validPost(post, true);
         User loginUser = userService.getLoginUser(request);
@@ -117,7 +120,7 @@ public class PostController {
         BeanUtils.copyProperties(postUpdateRequest, post);
         List<String> tags = postUpdateRequest.getTags();
         if (tags != null) {
-            post.setTags(JSONUtil.toJsonStr(tags));
+            post.setTags(GSON.toJson(tags));
         }
         // 参数校验
         postService.validPost(post, false);
@@ -148,22 +151,6 @@ public class PostController {
     }
 
     /**
-     * 分页获取列表（仅管理员）
-     *
-     * @param postQueryRequest
-     * @return
-     */
-    @PostMapping("/list/page")
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public BaseResponse<Page<Post>> listPostByPage(@RequestBody PostQueryRequest postQueryRequest) {
-        long current = postQueryRequest.getCurrent();
-        long size = postQueryRequest.getPageSize();
-        Page<Post> postPage = postService.page(new Page<>(current, size),
-                postService.getQueryWrapper(postQueryRequest));
-        return ResultUtils.success(postPage);
-    }
-
-    /**
      * 分页获取列表（封装类）
      *
      * @param postQueryRequest
@@ -177,9 +164,8 @@ public class PostController {
         long size = postQueryRequest.getPageSize();
         // 限制爬虫
         ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
-        Page<Post> postPage = postService.page(new Page<>(current, size),
-                postService.getQueryWrapper(postQueryRequest));
-        return ResultUtils.success(postService.getPostVOPage(postPage, request));
+        Page<PostVO> postVOPage = postService.listPostVOByPage(postQueryRequest, request);
+        return ResultUtils.success(postVOPage);
     }
 
     /**
@@ -241,7 +227,7 @@ public class PostController {
         BeanUtils.copyProperties(postEditRequest, post);
         List<String> tags = postEditRequest.getTags();
         if (tags != null) {
-            post.setTags(JSONUtil.toJsonStr(tags));
+            post.setTags(GSON.toJson(tags));
         }
         // 参数校验
         postService.validPost(post, false);

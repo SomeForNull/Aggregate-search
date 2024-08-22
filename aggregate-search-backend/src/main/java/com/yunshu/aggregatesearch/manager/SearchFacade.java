@@ -48,6 +48,7 @@ public class SearchFacade {
         String searchText = searchRequest.getSearchText();
         long current = searchRequest.getCurrent();
         long pageSize = searchRequest.getPageSize();
+
         // 搜索出所有数据
         if (searchTypeEnum == null) {
             CompletableFuture<Page<UserVO>> userTask = CompletableFuture.supplyAsync(() -> {
